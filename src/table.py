@@ -431,7 +431,7 @@ class TableWindow(QMainWindow):
     def load_data(self, override:bool=True, mode="default"):
         tm0 = time()
         if mode == "debug":
-            paths = [r"E:\Savelli_larmanalys\20251104_Z39A_Main\HMI_33IR\ArchiveManager\AlarmLogging\DESKTOP-HFS4KSQ_HMI#33IR_ALG_202511052300_202511062300.mdf"]
+            paths = [r"C:\Users\idaho\Documents\Scania\AlarmLogging\DESKTOP-HFS4KSQ_HMI#33IR_ALG_202502172300_202502182300.mdf"]
         else:
             file_paths, _ = QFileDialog.getOpenFileNames(
                 None,

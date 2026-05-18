@@ -9,8 +9,6 @@ ApplicationWindow {
     width: 800
     height: 500
     title: "Vision"
-    property string currTime: "00:00:00"
-    property string backImg: "./images/winxp.webp"
     property QtObject backend
     Rectangle {
         anchors.fill: parent
@@ -22,20 +20,20 @@ ApplicationWindow {
             spacing: 10
 
             Rectangle {
-                color: "transparent"
                 Layout.fillWidth: true
-                height: 50
-                border.color: "#000"
-                border.width: 1
+                height: 70
+                color: "#eee"
 
                 Text {
                     anchors {
                         horizontalCenter: parent.horizontalCenter
-                        verticalCenter: parent.verticalCenter
+                        bottom: parent.bottom
                     }
                     text: "Data Visualiser"
                     font.pixelSize: 48
                     color: "#000"
+                    font.family: "Eras ITC"
+                    font.bold: true
                 }
             }
 
@@ -43,7 +41,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 source: "./images/lines.svg"
-                fillMode: Image.PreserveAspectFit
+                fillMode: Image.Stretch
+                opacity: 0.75
             }
 
 
@@ -127,13 +126,6 @@ ApplicationWindow {
                     }
                 }
             }
-        }
-    }
-    
-    Connections {
-        target: backend
-        function onUpdated_time(msg) {
-            currTime = msg;
         }
     }
 }

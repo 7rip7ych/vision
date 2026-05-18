@@ -9,7 +9,7 @@ import random
 import re
 
 from PyQt6 import QtGui
-from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPicture, QImage
+from PyQt6.QtGui import QFont, QFontDatabase, QIcon, QPixmap, QPicture, QImage, QAction, QColor
 from PyQt6.QtCore import Qt, pyqtSignal, QDateTime, QDate, QTimeZone
 from PyQt6.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt6.QtQuickWidgets import QQuickWidget
@@ -287,16 +287,51 @@ class AnalysisWindow(QMainWindow):
         self.setGeometry(500, 100, 1300, 800)
         
         # self.setStyle("Fusion")
-        self.background_style = "QWidget { background-color: #fff; color: #000; border-radius: 10px; }" \
-        "QMenuBar { background-color: #ddd; color: #000; }"
+        self.background_style = "QWidget { color: #000; }" \
+        "QMainWindow, QToolButton { background-color: #fff; border-radius: 10px; }" \
+        "QMenuBar, QToolBar { background-color: #ddd; color: #000; }" \
+        "QToolBar QWidget { background-color: transparent }"
         self.layer1_style = """
-        QWidget { background-color: #dedede; } 
+        QWidget { background-color: #dedede; color: #000; border-radius: 10px; }
+        QTabWidget { border-radius: initial; }
         QLineEdit { 
             background-color: #fefefe;
             border-radius: 2px;
             padding: 2px 4px;
             border-bottom: 1px solid #777;
         }
+        """
+
+        self.tabs_style = """
+        QWidget { background-color: #dedede; color: #000;}
+        QTabBar { background-color: transparent; }
+
+        QTabBar::tab 
+        {
+            background: #ccc;
+            color: #444;
+            padding: 2px 8px;
+            border: 1px solid #bbb;
+            border-bottom: 0;
+            margin: 0px 2px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+
+        QTabBar::tab:selected, 
+        QTabBar::tab:hover 
+        {
+            border-color: #c2c2c2;
+            color: black;
+            background: #dedede; 
+        }
+        QLineEdit {
+            background-color: #fefefe;
+            border-radius: 2px;
+            padding: 2px 4px;
+            border-bottom: 1px solid #777;
+        }
+
         """
         self.layer2_style = "QWidget { background-color: #ccc; }"
         self.setStyleSheet(self.background_style)
@@ -329,7 +364,11 @@ class AnalysisWindow(QMainWindow):
 
         # main container
         self.main_tabs = QTabWidget()
-        self.main_tabs.setStyleSheet(self.layer1_style)
+        # pal = self.main_tabs.palette()
+        # pal.setColor(self.main_tabs.foregroundRole(), QColor("#dedede"))
+        # self.main_tabs.setPalette(pal)
+        # self.main_tabs.setAutoFillBackground(True)
+        self.main_tabs.setStyleSheet(self.tabs_style)
         self.draw_tab1()
         self.draw_tab2()
         self.draw_tab3()
@@ -362,33 +401,13 @@ class AnalysisWindow(QMainWindow):
         }
 
     def create_menu(self):
-        self.menu = self.menuBar()
-        if self.menu is None:
-            self.menu = QMenuBar(self)
+        self.toolbar = QToolBar()
+        self.addToolBar(self.toolbar)
 
-            print("none")
-        # if not isinstance(self.menu, QMenuBar): return
-        self.menu_options = {
-            # "file": self.menu.addMenu('&File'),
-            # "info": self.menu.addMenu('&Info'),
-            # "filter": self.menu.addMenu('&Filter'),
-            "export": self.menu.addMenu('&Export')
-        }
-        # if isinstance(self.menu_options['file'], QMenu):
-        #     self.menu_options['file'].addAction('Open', lambda: self.open_files())
-        #     self.menu_options['file'].addAction('Import', lambda: self.add_files())
-        #     self.menu_options['file'].addAction('Export', lambda: self.export())
-        #     self.menu_options['file'].addAction('Exit', self.destroy)
-
-
-        # if isinstance(self.menu_options['filter'], QMenu):
-        #     self.menu_options['filter'].addAction('Add filter', lambda: self.filter_window.view("add"))
-        #     self.menu_options['filter'].addAction('View filters', lambda: self.filter_window.view("view"))
-        #     self.menu_options['filter'].addAction('Edit filters', lambda: self.filter_window.view("edit"))
-        #     self.menu_options['filter'].addAction('Clear filters', self.filter_window.clear)
-
-        if isinstance(self.menu_options['export'], QMenu):
-            self.menu_options['export'].addAction('Export', self.export)
+        exp_act = QAction("Export", self)
+        exp_act.setStatusTip("Export analysis")
+        exp_act.triggered.connect(self.export)
+        self.toolbar.addAction(exp_act)
 
     def create_bottom_toolbar(self):
         """ Bottom bar """
@@ -650,11 +669,15 @@ class AnalysisWindow(QMainWindow):
         self.info_box_rows["alarms"].setText(f"""{'Different alarms: ':<20}{f'{self._focus_data["MsgNr"].nunique()}':>30}""")
         self.info_box_rows["time"].setText(f"""{'Total time: ':<20}{f'{only2["TimeDiff"].sum()/3600:.2f} h':>30}""")
 
-        if "DateTime" in self._focus_data.columns:
-            strt = int(self._focus_data["DateTime"].min().timestamp() * 1000)
-            end = int(self._focus_data["DateTime"].max().timestamp() * 1000)
-            self.start_date_edit.setDateTime(QDateTime.fromMSecsSinceEpoch(strt))
-            self.end_date_edit.setDateTime(QDateTime.fromMSecsSinceEpoch(end))
+        if self._focus_data is not None and "DateTime" in self._focus_data.columns:
+            startdt = str(self._focus_data["DateTime"].min())
+            enddt = str(self._focus_data["DateTime"].max())
+            strt = QDateTime.fromString(startdt, Qt.DateFormat.ISODateWithMs)
+            end = QDateTime.fromString(enddt, Qt.DateFormat.ISODateWithMs)
+            end = end.addSecs(60)
+            self.start_date_edit.setDateTime(strt)
+            self.end_date_edit.setDateTime(end)
+
 
     def update_tab1(self):
         # tab 1
@@ -741,15 +764,13 @@ class AnalysisWindow(QMainWindow):
     def reset_timeframe(self):
         """ Reset date filters """
         if not isinstance(self._original_data, pd.DataFrame): return
-        strt = int(self._original_data["DateTime"].min().timestamp() * 1000)
-        end = int(self._original_data["DateTime"].max().timestamp() * 1000)
-        print(self._original_data["DateTime"].min())
-        print(self._original_data["DateTime"].min().timestamp())
-        print(QDateTime.fromMSecsSinceEpoch(strt, QTimeZone(0)))
-        self.start_date_edit.setDateTime(QDateTime.fromMSecsSinceEpoch(strt))
-        self.end_date_edit.setDateTime(QDateTime.fromMSecsSinceEpoch(end))
-        # self.start_date_edit.setDate(QDate(2015, 1, 1))
-        # self.end_date_edit.setDate(QDate(2030, 1, 1))
+        startdt = str(self._original_data["DateTime"].min())
+        enddt = str(self._original_data["DateTime"].max())
+        strt = QDateTime.fromString(startdt, Qt.DateFormat.ISODateWithMs)
+        end = QDateTime.fromString(enddt, Qt.DateFormat.ISODateWithMs)
+        end = end.addSecs(60)
+        self.start_date_edit.setDateTime(strt)
+        self.end_date_edit.setDateTime(end)
         self.change_timeframe()
     
     def table_changed(self, data):

@@ -7,7 +7,7 @@ import os
 from time import strftime, localtime, sleep, time
 from os import path
 
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QFontDatabase
 from PyQt6.QtQml import QQmlApplicationEngine
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer, pyqtSlot, QAbstractTableModel, Qt, QModelIndex, QUrl, QSortFilterProxyModel
 from PyQt6.QtWidgets import QApplication, QFileDialog, QTableView, QWidget, QMainWindow, QHeaderView, QMenu
@@ -24,7 +24,7 @@ qml_path = path.join(bundle_dir, 'UI/main.qml')
 total1 = time()
 # start app
 app = QApplication(sys.argv)
-app.setWindowIcon(QIcon(os.path.join(bundle_dir, 'cat.ico')))
+app.setWindowIcon(QIcon(os.path.join(bundle_dir, 'UI/images/logo.svg')))
 engine = QQmlApplicationEngine()
 engine.quit.connect(app.quit)
 engine.quit.connect(app.closeAllWindows)
@@ -109,6 +109,8 @@ class Backend(QObject):
 
     @pyqtSlot()
     def off(self):
+        main.close()
+        an.close()
         app.quit()
 
 
