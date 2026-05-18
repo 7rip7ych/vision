@@ -14,6 +14,18 @@ ApplicationWindow {
         anchors.fill: parent
         color: "#eee"
 
+        Image {
+            source: "./images/logo/draft1.2_vision_logo_thicker.ico"
+            anchors {
+                top: parent.top
+                left: parent.left
+                margins: 5
+            }
+            fillMode: Image.PreserveAspectFit
+            width: 80
+            height: 80
+        }
+
         ColumnLayout {
             width: parent.width
             height: parent.height
@@ -22,7 +34,7 @@ ApplicationWindow {
             Rectangle {
                 Layout.fillWidth: true
                 height: 70
-                color: "#eee"
+                color: "transparent"
 
                 Text {
                     anchors {

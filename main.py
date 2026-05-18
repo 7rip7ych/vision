@@ -17,6 +17,9 @@ import src.file as f
 import src.data as d
 import src.table as t
 import src.analyze as a
+import src.splash as s
+
+
 # paths
 bundle_dir = path.abspath(path.dirname(__file__))
 qml_path = path.join(bundle_dir, 'UI/main.qml')
@@ -24,7 +27,11 @@ qml_path = path.join(bundle_dir, 'UI/main.qml')
 total1 = time()
 # start app
 app = QApplication(sys.argv)
-app.setWindowIcon(QIcon(os.path.join(bundle_dir, 'UI/images/logo.svg')))
+app.setWindowIcon(QIcon(os.path.join(bundle_dir, 'UI/images/logo/draft1.2_vision_logo_thicker (3).ico')))
+
+splash = s.SplashScreen()
+splash.show()
+
 engine = QQmlApplicationEngine()
 engine.quit.connect(app.quit)
 engine.quit.connect(app.closeAllWindows)
@@ -117,7 +124,6 @@ class Backend(QObject):
 
 backend = Backend()
 window.setProperty('backend', backend)
-backend.update_time()
 
 if 'debug' in sys.argv:
     print("loading...")
@@ -130,5 +136,6 @@ if 'debug' in sys.argv:
     print(f"open analysis: {tm6-tm5:.4f}")
 total2 = time()
 print("total", total2-total1)
+splash.finish(an)
 sys.exit(app.exec())
 
