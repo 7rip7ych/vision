@@ -318,6 +318,7 @@ class FilterWindow(QWidget):
         self.edit_layout = False
         self.filter_edit_list = False
         self.filter_view_list = False
+        self.add_tabs = False
         self.state = 0 # 0 for saved and 1 for unsaved changes
 
         self.pressable_button_style = ""
@@ -402,7 +403,6 @@ class FilterWindow(QWidget):
         main_layout = QVBoxLayout(widget)
         widget.setLayout(main_layout)
 
-        # create a tab widget
         # columns
         main_layout.addWidget(QLabel('Columns:'))
         colist = QWidget()
@@ -418,17 +418,60 @@ class FilterWindow(QWidget):
 
         checkboxes[0].clicked.connect(lambda: self.check_boxes(checkboxes))
 
+
         # cells
         main_layout.addWidget(QLabel("Match:"))
-        tabs = QTabWidget(widget)
-        main_layout.addWidget(tabs)
+        
+        # input switch
+        self.input_switch = QPushButton(widget)
+        self.input_switch.setCheckable(True)
+        self.input_switch.setText("Date inputs")
+        self.input_switch.setChecked(False)
+        self.input_switch.pressed.connect(lambda: self.update_add_page_inputs(main_layout))
+        main_layout.addWidget(self.input_switch)
+
+        self.create_add_page_tabs(main_layout)
+
+        redir = self.create_button_group([
+            ('Clear all', self.clear),
+            ('Edit', lambda: self.view("edit")),
+            ('View', lambda: self.view("view"))
+            ], "h", "stretch")
+        main_layout.addWidget(redir)
+
+        btn_group = self.create_action_buttons()
+        main_layout.addWidget(btn_group)
+
+
+        widget.setStyleSheet(self.unpressable_button_style)
+        self._layout.addWidget(widget)
+        self.stack.append("add")
+
+
+    def update_add_page_inputs(self, layout):
+        if self.input_switch.text() == "Date inputs":
+            self.input_switch.setText("Text inputs")
+        else:
+            self.input_switch.setText("Date inputs")
+        self.create_add_page_tabs(layout)
+
+
+    def create_add_page_tabs(self, parent_layout):
+        tabs = QTabWidget()
+        if self.add_tabs:
+            parent_layout.replaceWidget(self.add_tabs, tabs)
+            self.add_tabs.deleteLater()
+        else:
+            parent_layout.addWidget(tabs)
+        self.add_tabs = tabs
+        is_date = self.input_switch.text() == "Text inputs"
         fields = []
         # exact
         exact = QWidget()
         exmod = QFormLayout()
         exact.setLayout(exmod)
         exmod.addWidget(QLabel("Matches only cells that have the exact same value as written below."))
-        exline = QLineEdit(exact)
+        exline = QDateTimeEdit(exact) if is_date else QLineEdit(exact)
         fields.append(exline)
         exmod.addRow('Match:', exline)
         tabs.addTab(exact, "Exact")
@@ -438,7 +481,7 @@ class FilterWindow(QWidget):
         submod = QFormLayout()
         sub.setLayout(submod)
         submod.addWidget(QLabel("Matches part of cell value."))
-        subline = QLineEdit(sub)
+        subline = QDateTimeEdit(sub) if is_date else QLineEdit(sub)
         fields.append(subline)
         submod.addRow('Match:', subline)
         tabs.addTab(sub, "Partial")
@@ -448,7 +491,7 @@ class FilterWindow(QWidget):
         limod = QFormLayout()
         lis.setLayout(limod)
         limod.addWidget(QLabel("Matches any value in list. Takes comma separated values."))
-        lisline = QLineEdit(lis)
+        lisline = QDateTimeEdit(lis) if is_date else QLineEdit(lis)
         fields.append(lisline)
         limod.addRow('Match:', lisline)
         tabs.addTab(lis, "List")
@@ -462,7 +505,7 @@ class FilterWindow(QWidget):
         conmod.addWidget(QLabel("Matches cells that fits condition."))
         conmod.addRow('Operator:', combox)
         combox.currentTextChanged.connect(self.check_if_applicable)
-        conline = QLineEdit(cond)
+        conline = QDateTimeEdit(cond) if is_date else QLineEdit(cond)
         fields.append(conline)
         conmod.addRow('Value:', conline)
         tabs.addTab(cond, "Conditional")
@@ -472,30 +515,19 @@ class FilterWindow(QWidget):
         rnmod = QFormLayout()
         rng.setLayout(rnmod)
         rnmod.addWidget(QLabel("Matches value in range, including both limits. Only works on numbers and dates."))
-        rngline1 = QLineEdit(rng)
-        rngline2 = QLineEdit(rng)
+        rngline1 = QDateTimeEdit(rng) if is_date else QLineEdit(rng)
+        rngline2 = QDateTimeEdit(rng) if is_date else QLineEdit(rng)
         fields.append(rngline1)
         fields.append(rngline2)
         rnmod.addRow('Lower bound:', rngline1)
         rnmod.addRow('Higher bound:', rngline2)
         tabs.addTab(rng, "Range")
 
-        redir = self.create_button_group([
-            ('Clear all', self.clear),
-            ('Edit', lambda: self.view("edit")),
-            ('View', lambda: self.view("view"))
-            ], "h", "stretch")
-        main_layout.addWidget(redir)
-
-        btn_group = self.create_action_buttons()
-        main_layout.addWidget(btn_group)
-
         for line in fields:
-            line.textChanged.connect(self.change_state)
-
-        widget.setStyleSheet(self.unpressable_button_style)
-        self._layout.addWidget(widget)
-        self.stack.append("add")
+            if is_date:
+                line.dateTimeChanged.connect(self.change_state)
+            else:
+                line.textChanged.connect(self.change_state)
 
     def create_view_page(self):
         widget = QWidget(self)

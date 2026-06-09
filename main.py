@@ -136,6 +136,6 @@ if 'debug' in sys.argv:
     print(f"open analysis: {tm6-tm5:.4f}")
 total2 = time()
 print("total", total2-total1)
-splash.finish(an)
+splash.finish(main)
 sys.exit(app.exec())
 

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QApplication, QSplashScreen
 class SplashScreen(QSplashScreen):
     def __init__(self):
         super(QSplashScreen, self).__init__()
-        self.setWindowFlag(Qt.WindowType.SplashScreen)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         pixmap = QPixmap("UI/images/logo/logo.ico")
         self.setPixmap(pixmap)
 

@@ -162,6 +162,8 @@ class TableModel(QAbstractTableModel):
         df = self.filter_model.search(string, case_sensitive, match_whole_cell, is_regex)
         if isinstance(df, pd.DataFrame):
             self.changeLayout(df)
+        else:
+            self.changeLayout(pd.DataFrame())
 
     def join_dataframes(self, tables):
         df = pd.concat(tables, axis=0)
@@ -225,8 +227,8 @@ class TableWindow(QMainWindow):
         self.file_paths = []
         self.info_window = False
         # self.filter_model = flt.FilterModel()
-        self.init_headers = ["Counter", "DateTime", "TimeDiff", "MsgNr", "Class", "Classname", "Type", "State", "StateText", "Text1", "Zone_beta", "Zone", "Group"]
-        self.shown_headers = ["Counter", "DateTime", "TimeDiff", "MsgNr", "Class", "Classname", "Type", "State", "StateText", "Text1", "Zone_beta", "Zone", "Group"]
+        self.init_headers = ["Counter", "DateTime", "TimeDiff", "MsgNr", "Class", "Classname", "Type", "State", "StateText", "Text1", "Zone", "Group"]
+        self.shown_headers = ["Counter", "DateTime", "TimeDiff", "MsgNr", "Class", "Classname", "Type", "State", "StateText", "Text1", "Zone", "Group"]
         self.columnWidths = {
                                 "Counter": 121,
                                 "DateTime": 149,
@@ -238,9 +240,8 @@ class TableWindow(QMainWindow):
                                 "State": 39,
                                 "StateText": 63,
                                 "Text1": 1010,
-                                "Zone_beta": 39,
-                                "Zone": 60,
-                                "Group": 60
+                                "Zone": 120,
+                                "Group": 120
                             }
         self.filter_window = flt.FilterWindow(self.shown_headers)
         self.export_window = ExportWindow()

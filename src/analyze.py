@@ -571,20 +571,20 @@ class AnalysisWindow(QMainWindow):
 
         self.hist_chart3 = dia.HistogramChart("All", "MsgNr", top=15, click_method=self.get_alarm_info)
 
-        holder = QWidget()
-        hlayout = QHBoxLayout()
-        holder.setLayout(hlayout)
-        hlayout.addWidget(QLabel("Minimum duration (seconds): "))
-        self.tab2_timediff_limit = QLineEdit()
-        self.tab2_timediff_limit.setText("0")
-        self.tab2_timediff_limit.textChanged.connect(self.update_tab2)
-        hlayout.addWidget(self.tab2_timediff_limit)
+        # holder = QWidget()
+        # hlayout = QHBoxLayout()
+        # holder.setLayout(hlayout)
+        # hlayout.addWidget(QLabel("Minimum duration (seconds): "))
+        # self.tab2_timediff_limit = QLineEdit()
+        # self.tab2_timediff_limit.setText("0")
+        # self.tab2_timediff_limit.textChanged.connect(self.update_tab2)
+        # hlayout.addWidget(self.tab2_timediff_limit)
 
         # self.hist_chart3 = dia.HistogramChart("Alarm count", "MsgNr")
         # self.hist_chart3.canvas.set_transparency(0.5, "back")
         # self.hist_chart3.canvas.set_background(background)
 
-        self.graph_tab2_layout.addWidget(holder, 0, 0)
+        # self.graph_tab2_layout.addWidget(holder, 0, 0)
         self.graph_tab2_layout.addWidget(self.hist_chart1, 1, 0)
         self.graph_tab2_layout.addWidget(self.hist_chart2, 2, 0)
         self.graph_tab2_layout.addWidget(self.hist_chart3, 3, 0)
@@ -598,6 +598,7 @@ class AnalysisWindow(QMainWindow):
 
         scroll_area = QScrollArea(self.graph_tab3)
         scroll_area.setWidgetResizable(True)
+
         # scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         # scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         grid.addWidget(scroll_area, 0, 0)
@@ -608,21 +609,23 @@ class AnalysisWindow(QMainWindow):
         scroll_area.setWidget(scroll_content)
 
         self.tab3_hist1 = dia.SumHistogramChart("Machine", "MsgNr", top=10, unit="s", click_method=self.get_alarm_info)
+        # self.tab3_hist1.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # self.tab3_hist1.setDisabled(True)
 
         self.tab3_hist2 = dia.SumHistogramChart("System", "MsgNr", top=10, unit="s", click_method=self.get_alarm_info)
 
         self.tab3_hist3 = dia.SumHistogramChart("All", "MsgNr", top=15, unit="s", click_method=self.get_alarm_info)
 
-        holder = QWidget()
-        hlayout = QHBoxLayout()
-        holder.setLayout(hlayout)
-        hlayout.addWidget(QLabel("Minimum duration (seconds): "))
-        self.tab3_timediff_limit = QLineEdit()
-        self.tab3_timediff_limit.setText("0")
-        self.tab3_timediff_limit.textChanged.connect(self.update_tab3)
-        hlayout.addWidget(self.tab3_timediff_limit)
+        # holder = QWidget()
+        # hlayout = QHBoxLayout()
+        # holder.setLayout(hlayout)
+        # hlayout.addWidget(QLabel("Minimum duration (seconds): "))
+        # self.tab3_timediff_limit = QLineEdit()
+        # self.tab3_timediff_limit.setText("0")
+        # self.tab3_timediff_limit.textChanged.connect(self.update_tab3)
+        # hlayout.addWidget(self.tab3_timediff_limit)
 
-        self.graph_tab3_layout.addWidget(holder, 0, 0)
+        # self.graph_tab3_layout.addWidget(holder, 0, 0)
         self.graph_tab3_layout.addWidget(self.tab3_hist1, 1, 0)
         self.graph_tab3_layout.addWidget(self.tab3_hist2, 2, 0)
         self.graph_tab3_layout.addWidget(self.tab3_hist3, 3, 0)
@@ -740,7 +743,7 @@ class AnalysisWindow(QMainWindow):
 
     def load_data(self, data):
         # if not self.isVisible(): return
-        if data.empty: return
+        if data is None or data.empty: return
         self.draw_reload_button(False)
         self._original_data = data
         self.table_data = data

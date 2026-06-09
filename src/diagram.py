@@ -109,6 +109,11 @@ class Chart(QWidget):
         self.canvas.draw()
         # self.show()
 
+    def wheelEvent(self, a0: QtGui.QWheelEvent | None) -> None:
+        if a0 is not None:
+            a0.ignore()
+        # return super().wheelEvent(a0)
+
 
 
 
