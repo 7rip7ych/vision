@@ -303,6 +303,7 @@ class FilterModel(QObject):
 
 
 class FilterWindow(QWidget):
+    closed = pyqtSignal()
     def __init__(self, headers):
         super().__init__()
         # self.model = model
@@ -329,6 +330,9 @@ class FilterWindow(QWidget):
                     }
                     """
 
+    # def closeEvent(self, a0):
+    #     self.closed.emit()
+    #     a0.accept()
 
     def set_model(self, model:FilterModel):
         self.model = model
@@ -606,7 +610,7 @@ class FilterWindow(QWidget):
 
         # Add rows
         self.keep_alive = []
-        for filter in self.model.get():
+        for i, filter in enumerate(self.model.get()):
             if view == "view":
                 list_layout.addWidget(QLabel(str(filter)))
             elif view == "edit":
@@ -616,6 +620,7 @@ class FilterWindow(QWidget):
                 field.textChanged.connect(self.change_state)
                 self.keep_alive.append(field)
                 list_layout.addRow(del_btn, field)
+                # del_btn.pressed.connect(lambda: list_layout.removeRow(i))
 
         # /re/place widget in layout
         if view == "view":

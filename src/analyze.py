@@ -2,6 +2,8 @@ import sys
 import os
 from datetime import datetime
 
+from src.filter import FilterWindow
+
 os.environ["QT_API"] = "PyQt6"
 
 from pathlib import Path
@@ -279,17 +281,17 @@ class AutoscalePixmap(QLabel):
 
 
 class AnalysisWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, filter_window:FilterWindow):
         super().__init__()
         self.setWindowTitle('Analysis')
-        self.setMinimumHeight(300)
-        self.setMinimumWidth(400)
+        self.setMinimumHeight(600)
+        self.setMinimumWidth(1060)
         self.setGeometry(500, 100, 1300, 800)
         
         # self.setStyle("Fusion")
         self.background_style = "QWidget { color: #000; }" \
         "QMainWindow, QToolButton { background-color: #fff; border-radius: 10px; }" \
-        "QMenuBar, QToolBar { background-color: #ddd; color: #000; }" \
+        #"QMenuBar, QToolBar { background-color: #ddd; color: #000; }" \
         "QToolBar QWidget { background-color: transparent }"
         self.layer1_style = """
         QWidget { background-color: #dedede; color: #000; border-radius: 10px; }
@@ -345,6 +347,7 @@ class AnalysisWindow(QMainWindow):
         self.table_data = None
         self._focus_data = None
         self.export_window = None
+        self.filter_window = filter_window
         self.draw()
         # self.show()
 
@@ -386,12 +389,14 @@ class AnalysisWindow(QMainWindow):
         self.grid.addWidget(self.nav, 0, 0, 2, 1)
         self.grid.addWidget(self.info_box, 2, 0, 3, 1)
         self.grid.addWidget(self.main_tabs, 0, 1, 5, 4)
+        self.info_box.setMinimumWidth(375)
+        self.info_box.setMaximumWidth(400)
+        # self.main_tabs.setSizePolicy(QSizePolicy.Policy.Expanding)
         self.info_box.setStyleSheet(self.layer1_style)
 
         self.figures = {
             "1.1 Pie": self.msg_pie,
-            "1.2 Scatter": self.scatter_chart,
-            "1.3 Scatter duration": self.duration_chart,
+            "1.2 Timeline": self.broken_hbar,
             "2.1 Bar machine count": self.hist_chart1,
             "2.2 Bar system count": self.hist_chart2,
             "2.3 Bar all count": self.hist_chart3,
@@ -401,13 +406,51 @@ class AnalysisWindow(QMainWindow):
         }
 
     def create_menu(self):
-        self.toolbar = QToolBar()
-        self.addToolBar(self.toolbar)
+        # self.toolbar = QToolBar()
+        self.toolbar = self.menuBar()
+        # self.addToolBar(self.toolbar)
+        if not isinstance(self.toolbar, QMenuBar): return
 
-        exp_act = QAction("Export", self)
+        exp_act = QAction("&Export", self)
         exp_act.setStatusTip("Export analysis")
         exp_act.triggered.connect(self.export)
         self.toolbar.addAction(exp_act)
+        self.menu_options = {
+            "export": self.toolbar.addMenu('&Export'),
+            "filter": self.toolbar.addMenu('&Filter')
+        }
+        if isinstance(self.menu_options['export'], QMenu):
+            self.menu_options["export"].aboutToShow.connect(self.export)
+        if isinstance(self.menu_options['filter'], QMenu):
+            self.menu_options["filter"].addAction('Add filter', lambda: self.filter_window.view("add"))
+            self.menu_options["filter"].addAction('View filters', lambda: self.filter_window.view("view"))
+            self.menu_options["filter"].addAction('Edit filters', lambda: self.filter_window.view("edit"))
+            self.menu_options["filter"].addAction('Clear filters', self.filter_window.clear)
+            self.menu_options["filter"].triggered.connect(self.link)
+
+
+        
+
+        # filter_menu = QMenu("&Filter")
+
+        # filter_menu.addAction('Add filter', lambda: self.filter_window.view("add"))
+        # filter_menu.addAction('View filters', lambda: self.filter_window.view("view"))
+        # filter_menu.addAction('Edit filters', lambda: self.filter_window.view("edit"))
+        # filter_menu.addAction('Clear filters', self.filter_window.clear)
+        # self.toolbar.addMenu(filter_menu)
+
+        # self.filter_window.model.valueUpdated.connect(self.refresh)
+    
+    def link(self):
+        print("pzzzz")
+        self.filter_window.model.valueUpdated.connect(self.refresh)
+        self.menu_options["filter"].triggered.disconnect()
+        # self.filter_window.closed.connect(self.unlink)
+    
+    def unlink(self):
+        print("zzzzp")
+        self.filter_window.model.valueUpdated.disconnect()
+        self.filter_window.closed.disconnect()
 
     def create_bottom_toolbar(self):
         """ Bottom bar """
@@ -529,19 +572,19 @@ class AnalysisWindow(QMainWindow):
         self.graph_tab1.setLayout(self.graph_tab1_layout)
 
         # graphs
-        self.msg_pie = dia.PieChart("MsgNr")
+        self.msg_pie = dia.PieChart("Distribution")
         self.nav.canvas.set_transparency(0, "both")
         self.nav.canvas.set_background('None')
 
-        self.scatter_chart = dia.ScatterChart("Appearance")
+        # self.scatter_chart = dia.ScatterChart("Appearance")
 
-        self.duration_chart = dia.ScatterChart("Duration")
+        # self.duration_chart = dia.ScatterChart("Duration")
 
-
+        self.broken_hbar = dia.BrokenBarH("Timeline")
         # second sublayer
         self.graph_tab1_layout.addWidget(self.msg_pie, 0, 0, 1, 2)
-        self.graph_tab1_layout.addWidget(self.scatter_chart, 1, 0)
-        self.graph_tab1_layout.addWidget(self.duration_chart, 1, 1)
+        self.graph_tab1_layout.addWidget(self.broken_hbar, 1, 0, 1, 2)
+        # self.graph_tab1_layout.addWidget(self.duration_chart, 1, 1)
 
         # main sublayer
         self.main_tabs.addTab(self.graph_tab1, "Overview")
@@ -688,9 +731,28 @@ class AnalysisWindow(QMainWindow):
         self.msg_pie.set_data(only2["MsgNr"])
         # min_diff = only2["TimeDiff"].apply(lambda x: x//60*5)
         # self.duration_chart.set_data(min_diff)
-        self.duration_chart.set_data(only2["TimeDiff"].index.to_list(), only2["TimeDiff"].to_list())
+        # self.duration_chart.set_data(only2["TimeDiff"].index.to_list(), only2["TimeDiff"].to_list())
 
-        self.scatter_chart.set_data(only2["DateTime"].to_list(), only2["MsgNr"].to_list())
+        # self.scatter_chart.set_data(only2["DateTime"].to_list(), only2["MsgNr"].to_list())
+        temp_df = only2
+        min_time = temp_df["DateTime"].min()
+        temp_df["start"] = (temp_df["DateTime"] - min_time)
+        temp_df["start"] = temp_df["start"].apply(lambda x: x.total_seconds())
+        # print(temp_df["start"])
+        # temp_df["dur"] = pd.to_timedelta(temp_df["TimeDiff"], 'seconds')
+        # temp_df["DateTime2"] = (temp_df["DateTime"] + pd.to_timedelta(temp_df["TimeDiff"], 'seconds'))
+        temp1 = temp_df[temp_df["MsgNr"] >= 1000000][["start", "TimeDiff"]]
+        temp2 = temp_df[temp_df["MsgNr"] < 1000000][["start", "TimeDiff"]]
+        arr1 = []
+        arr2 = []
+        if not temp1.empty:
+            arr1.append(temp1.to_numpy())
+            arr2.append("System")
+        if not temp2.empty:
+            arr1.append(temp2.to_numpy())
+            arr2.append("Machine")
+        self.broken_hbar.set_data(arr1, arr2, xtick_format=("divide", 3600), xmin=min_time.hour)
+
 
     def update_tab2(self):
         # tab 2
@@ -752,6 +814,8 @@ class AnalysisWindow(QMainWindow):
         # self.show()
 
     def set_data(self, data):
+        if data is None or data.empty:
+            return
         self.data = data
         self._focus_data = data
         self.change_target()
@@ -852,6 +916,7 @@ class AnalysisWindow(QMainWindow):
         if self.export_window is None or not isinstance(self.export_window, ExportWindow):
             self.export_window = ExportWindow(self)
         self.export_window.show()
+
 
 class ExportWindow(QWidget):
     def __init__(self, parent:AnalysisWindow):

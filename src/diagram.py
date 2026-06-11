@@ -1,3 +1,4 @@
+from math import ceil, floor
 import sys
 import os
 
@@ -81,6 +82,7 @@ class Chart(QWidget):
         self.setLayout(self.layt)
         # self.canvas.set_transparency(0.5, "back")
         self.canvas.set_background('#f5f5f5')
+        # self.canvas.fig.tight_layout()
 
     def set_data(self, data):
         self.data = data
@@ -534,10 +536,10 @@ class PieChart(Chart):
         kw = dict(arrowprops=dict(arrowstyle="-"),
                 bbox=bbox_props, zorder=0, va="center")
 
-        self.canvas.axes.legend(wedges, self.labels,
-                title="labels",
-                loc="center right",
-                bbox_to_anchor=(1.5, 0, 0.5, 1))
+        # self.canvas.axes.legend(wedges, self.labels,
+        #         title="labels",
+        #         loc="center right",
+        #         bbox_to_anchor=(1.5, 0, 0.5, 1))
         self.annots = []
         for i, p in enumerate(wedges):
             ang = (p.theta2 - p.theta1)/2. + p.theta1
@@ -549,7 +551,7 @@ class PieChart(Chart):
             connectionstyle = f"angle,angleA=0,angleB={ang}"
             kw["arrowprops"].update({"connectionstyle": connectionstyle})
             annot = self.canvas.axes.annotate(f"{self.labels[i]}\n~{self.slices[i]*100:.2f}%", xy=(x, y),
-                                                xytext=(1.35*np.sign(x), 1.4*y),
+                                                xytext=(1.2*np.sign(x), 1.2*y),
                                                 horizontalalignment=horizontalalignment, **kw)
             annot.set_visible(False)
             self.annots.append(annot)
@@ -774,6 +776,81 @@ class PieChart(Chart):
         #     self.annots[0].set_visible(False)
         #     self.canvas.draw_idle()
 
+
+class BrokenBarH(Chart):
+    def __init__(self, title):
+        super().__init__()
+        self.title = title
+        cpu_1 = [(0, 3), (3.5, 1), (5, 5)]
+        cpu_2 = np.column_stack([np.linspace(0, 9, 10), np.full(10, 0.5)])
+        cpu_3 = np.column_stack([10*np.random.random(61), np.full(61, 0.05)])
+        cpu_4 = [(2, 1.7), (7, 1.2)]
+        disk = [(1, 1.5)]
+        network = np.column_stack([10*np.random.random(10), np.full(10, 0.05)])
+        self.canvas.axes.broken_barh(cpu_1, (-0.2, 0.4))
+        self.canvas.axes.broken_barh(cpu_2, (0.8, 0.4))
+        self.canvas.axes.broken_barh(cpu_3, (1.8, 0.4))
+        self.canvas.axes.broken_barh(cpu_4, (2.8, 0.4))
+        self.canvas.axes.broken_barh(disk, (3.8, 0.4), color="tab:orange")
+        self.canvas.axes.broken_barh(network, (4.8, 0.4), color="tab:green")
+        self.canvas.axes.set_xlim(0, 10)
+        self.canvas.axes.set_yticks(range(6),
+                    labels=["CPU 1", "CPU 2", "CPU 3", "CPU 4", "disk", "network"])
+        self.canvas.axes.invert_yaxis()
+        self.canvas.axes.set_title("Resource usage")
+        self.colors = ["blue", "orange", "green"]
+
+    
+    def set_data(self, data:list|tuple, labels:list|tuple, colors=None, xtick_format=None, xmin=0):
+        self.data = data
+        self.labels = labels
+        self.xtick_format = xtick_format
+        self.xmin = xmin
+        if colors:
+            self.colors = colors
+
+        self.update_plot()
+
+    def update_plot(self):
+        self.canvas.axes.clear()
+
+        for i in range(len(self.data)):
+            self.canvas.axes.broken_barh(self.data[i], (i-0.2, 0.4), color=f"tab:{self.colors[i]}", alpha=0.25)
+
+        curr_lims = self.canvas.axes.get_xlim()
+        max_rounded = floor(curr_lims[1] / 3600)
+        ticks = [x*3600 for x in range(max_rounded + 1)]
+        if len(ticks) > 10:
+            ticks_maj = shorten_list(ticks, 10)
+        else:
+            ticks_maj = ticks
+        self.canvas.axes.set_xticks(ticks=ticks, labels=[str(x) for x in ticks], minor=True)
+        self.canvas.axes.set_xticks(ticks=ticks_maj, labels=[str(x) for x in ticks_maj], minor=False)
+
+        self.canvas.axes.xaxis.set_major_formatter(lambda x, pos: str(int((x/3600))))
+        self.canvas.axes.xaxis.set_minor_formatter('')
+        self.canvas.axes.set_xlabel("Hours since start")
+        self.canvas.axes.set_yticks(range(len(self.labels)),
+                    labels=self.labels)
+        self.canvas.axes.invert_yaxis()
+        self.canvas.axes.set_title(self.title)
+        self.canvas.fig.tight_layout()
+        self.canvas.draw()
+        # self.show()
+
+
+def shorten_list(lst, max_len):
+    prop = ceil(len(lst) / max_len)
+    old_list = lst
+    new_list = []
+    # if prop % 2 == 0:
+    while len(old_list) > max_len:
+        for i, ele in enumerate(old_list):
+            if i%2 == 1:
+                new_list.append(ele)
+        old_list = new_list
+        new_list = []
+    return old_list
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

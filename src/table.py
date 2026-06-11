@@ -96,6 +96,7 @@ class TableModel(QAbstractTableModel):
                 return str(self._data.index[section])
 
     def changeLayout(self, new_data:pd.DataFrame):
+        print('change')
         self.layoutAboutToBeChanged.emit()
         self._data = new_data
         self.layoutChanged.emit()
@@ -434,12 +435,15 @@ class TableWindow(QMainWindow):
         if mode == "debug":
             paths = [r"C:\Users\idaho\Documents\Scania\AlarmLogging\DESKTOP-HFS4KSQ_HMI#33IR_ALG_202502172300_202502182300.mdf"]
         else:
-            file_paths, _ = QFileDialog.getOpenFileNames(
-                None,
-                "Select files",
-                r"E:\Savelli_larmanalys\20251104_Z39A_Main\HMI_33IR\ArchiveManager\AlarmLogging",
-                "Database files (*.mdf);;All Files (*)"
-            )
+            try:
+                file_paths, _ = QFileDialog.getOpenFileNames(
+                    None,
+                    "Select files",
+                    r"E:\Savelli_larmanalys\20251104_Z39A_Main\HMI_33IR\ArchiveManager\AlarmLogging",
+                    "Database files (*.mdf);;All Files (*)"
+                )
+            except Exception as e:
+                print(e)
             if not file_paths:
                 return
             # print("Selected files: ", file_paths)
@@ -453,17 +457,24 @@ class TableWindow(QMainWindow):
             self.file_paths = paths
         else:
             self.file_paths = self.file_paths + paths
+        call_function = self.open_files if override else self.add_files
         tm1 = time()
         try:
             if self.alarm_list is None:
-                tables, self.alarm_list = f.load_files(paths, self.query, True)
-                self.infoUpdated.emit(self.alarm_list)
+                res = f.load_files(paths, self.query, True)
+                if res is not None and res[1] is not None:
+                    tables, self.alarm_list = res
+                    self.infoUpdated.emit(self.alarm_list)
+                else:
+                    tables = None
             else:
                 tables = f.load_files(paths, self.query, False)
         except Exception as e:
-            call_function = self.open_files if override else self.add_files
             self.warnings.warn("File error", ("Could not access file. \nCheck that SQL Express works correctly and has the necessary permissions to read the file. \n" + repr(e)), call_function)
             print(e)
+            return
+        if tables is None:
+            self.warnings.warn("File error", ("Could not read file. \nTry another file."), call_function)
             return
         tm2 = time()
         # for table in tables:
